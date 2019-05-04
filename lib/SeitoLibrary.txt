@@ -1,1 +1,0 @@
-./Debug/main.cpp.o ./Debug/BookTitle.cpp.o ./Debug/LibraryContext.cpp.o ./Debug/BookCopy.cpp.o ./Debug/Student.cpp.o ./Debug/Manager.cpp.o ./Debug/BorrowLog.cpp.o   
