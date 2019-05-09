@@ -16,7 +16,7 @@ void MyLibrary::LibraryContext::readData()
 	string emptyline;
 
 	// add manager
-	filename = "Managers.txt";
+	filename = "Resources\Managers.txt";
 	inputfile.open(filename);
 
 	Manager recentManager;
@@ -36,7 +36,7 @@ void MyLibrary::LibraryContext::readData()
 	filename.clear();
 
 	// add student
-	filename = "Students.txt";
+	filename = "Resouces\Students.txt";
 	inputfile.open(filename);
 	Student recentStudent;
 
@@ -53,7 +53,7 @@ void MyLibrary::LibraryContext::readData()
 	filename.clear();
 
 	// add Book title
-	filename = "BookTitles.txt";
+	filename = "Resources\BookTitles.txt";
 	inputfile.open(filename);
 	BookTitle recentTitle;
 
@@ -70,7 +70,7 @@ void MyLibrary::LibraryContext::readData()
 	filename.clear();
 
 	// add Book Copy
-	filename = "BookCopies.txt";
+	filename = "Resources\BookCopies.txt";
 	inputfile.open(filename);
 	BookCopy recentCopy;
 
@@ -91,7 +91,7 @@ void MyLibrary::LibraryContext::readData()
 
 	// add BorrowLog
 
-	filename = "BorrowLogs.txt";
+	filename = "Resources\BorrowLogs.txt";
 	inputfile.open(filename);
 
 	BorrowLog recentLog;
