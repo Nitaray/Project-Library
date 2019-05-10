@@ -52,6 +52,7 @@ public:
 	bool updateCopy(BookCopy bcopy);
 
     bool makeBorrow(int sid, int cid);
+    bool releaseBorrow(int sid, int cid);
 	
     std::shared_ptr<Student> getStudent(int id);
     std::shared_ptr<BookTitle> getTitle(int id);
