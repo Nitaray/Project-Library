@@ -48,6 +48,8 @@ public:
 	void removeCopy(int id);
 	
 	bool updateCopy(BookCopy bcopy);
+
+    bool makeBorrow(Student student, BookCopy bcopy);
 	
     std::shared_ptr<Student> getStudent(int id);
     std::shared_ptr<BookTitle> getTitle(int id);

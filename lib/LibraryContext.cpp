@@ -31,7 +31,7 @@ void MyLibrary::LibraryContext::readData()
 		addManager(recentManager);
 		getline(inputfile, emptyline);
 	}
-	cout<<"You've finished reading Manager.txt"<<endl;
+
 	inputfile.close();
 	filename.clear();
 
@@ -48,7 +48,7 @@ void MyLibrary::LibraryContext::readData()
 		addStudent(recentStudent);
 		getline(inputfile, emptyline);
 	}
-	cout<<"You've finished reading Students.txt"<<endl;
+
 	inputfile.close();
 	filename.clear();
 
@@ -65,7 +65,7 @@ void MyLibrary::LibraryContext::readData()
 		addTitle(recentTitle);
 		getline(inputfile, emptyline);
 	}
-	cout<<"You've finished reading BookTitles.txt"<<endl;
+
 	inputfile.close();
 	filename.clear();
 
@@ -85,7 +85,7 @@ void MyLibrary::LibraryContext::readData()
 		addCopy(recentCopy);
 		getline(inputfile, emptyline);
 	}
-	cout<<"You've finished reading BookCopies.txt"<<endl;
+
 	inputfile.close();
 	filename.clear();
 
@@ -117,6 +117,13 @@ void MyLibrary::LibraryContext::readData()
 		getline(inputfile, emptyline);
 		getline(inputfile, recentLog.Borrower.Fullname);
 		getline(inputfile, recentLog.Borrower.Username);
+
+		//fined
+		string line;
+		getline(inputfile,line);
+		if (line=="FINED")
+			recentLog.Fined=true;
+		else recentLog.Fined=false;
 
 		addLog(recentLog);
 
@@ -239,6 +246,37 @@ bool MyLibrary::LibraryContext::updateCopy(BookCopy bcopy)
 	addCopy(bcopy);
 
 	return true;
+}
+
+bool MyLibrary::LibraryContext::makeBorrow(Student student, BookCopy brcopy)
+{
+	for (auto brlog : _LogStorage)						//Check whether borrower is currently borrowing
+		if (brlog.second.Borrower.Id == student.Id)
+			return false;
+	
+	for (auto bcopy : _CopyStorage)
+		if (bcopy.second.Id == brcopy.Id)
+			return false;
+
+	BorrowLog newBorrow;
+
+	newBorrow.Id = _LogStorage.rbegin()->second.Id + 1;
+	
+	newBorrow.Title.Id = brcopy.TitleId;
+	newBorrow.Title.Name = _TitleStorage[brcopy.TitleId].Name;
+	newBorrow.Title.Author = _TitleStorage[brcopy.TitleId].Author;
+
+	newBorrow.Copy.Id = brcopy.Id;
+	newBorrow.Copy.TitleId = brcopy.TitleId;
+	newBorrow.Copy.Shelf = brcopy.Shelf;
+	newBorrow.Copy.BorrowerId = student.Id;
+
+	newBorrow.Borrower.Id = student.Id;
+	newBorrow.Borrower.Fullname = student.Fullname;
+	newBorrow.Borrower.Username = student.Username;
+
+	addLog(newBorrow);
+	removeCopy(brcopy.Id); //?
 }
 
 shared_ptr<Student> MyLibrary::LibraryContext::getStudent(int id)
@@ -368,5 +406,97 @@ shared_ptr<list<BookCopy>> MyLibrary::LibraryContext::getCopiesByBorrowerId(int 
 
 void MyLibrary::LibraryContext::writeData()
 {
-	
+	ofstream outputfile;
+	string filename;
+
+	//write manager
+	filename = "Managers.out";
+	outputfile.open (filename);
+
+	Manager recentManager;
+	for (auto it : _ManagerStorage) {
+		recentManager=it.second;
+		outputfile<<recentManager.Id<<endl;
+		outputfile<<recentManager.Fullname<<endl;
+		outputfile<<recentManager.Username<<endl;
+		outputfile<<recentManager.Password<<endl<<endl;
+	}
+	outputfile.close();
+	filename.clear();
+
+	//write student
+	filename = "Students.out";
+	outputfile.open(filename);
+
+	Student recentStudent;
+	for(auto it: _StudentStorage) {
+		recentStudent=it.second;
+		outputfile<<recentStudent.Id<<endl;
+		outputfile<<recentStudent.Fullname<<endl;
+		outputfile<<recentStudent.Username<<endl<<endl;
+
+	}
+	outputfile.close();
+	filename.clear();
+
+	//write BookTitle
+	filename="BookTitles.out";
+	outputfile.open(filename);
+
+	BookTitle recentTitle;
+	for (auto it: _TitleStorage) {
+		recentTitle=it.second;
+		outputfile<<recentTitle.Id<<endl;
+		outputfile<<recentTitle.Name<<endl;
+		outputfile<<recentTitle.Author<<endl<<endl;
+	}
+	outputfile.close();
+	filename.clear();
+
+	//write bookcopy
+	filename="BookCopies.out";
+	outputfile.open (filename);
+
+	BookCopy  recentCopy;
+	for (auto it : _CopyStorage) {
+		recentCopy=it.second;
+		outputfile<<recentCopy.Id<<endl;
+		outputfile<<recentCopy.TitleId<<endl;
+		outputfile<<recentCopy.Shelf<<endl;
+		outputfile<<recentCopy.BorrowerId<<endl;
+		outputfile<<recentCopy.StartDate<<endl;
+		outputfile<<recentCopy.DueDate<<endl<<endl;
+	}
+	outputfile.close();
+	filename.clear();
+
+	//write borrowlog
+	filename="BorrowLogs.out";
+	outputfile.open(filename);
+
+	BorrowLog recentLog;
+	for (auto it:_LogStorage) {
+		recentLog=it.second;
+
+		outputfile<<recentLog.Id<<endl;
+
+		outputfile<<recentLog.Title.Id<<endl;
+		outputfile<<recentLog.Title.Name<<endl;
+		outputfile<<recentLog.Title.Author<<endl;
+
+		outputfile<<recentLog.Copy.Id<<endl;
+		outputfile<<recentLog.Copy.TitleId<<endl;
+		outputfile<<recentLog.Copy.Shelf<<endl;
+		outputfile<<recentLog.Copy.BorrowerId<<endl;
+
+		outputfile<<recentLog.Borrower.Id<<endl;
+		outputfile<<recentLog.Borrower.Fullname<<endl;
+		outputfile<<recentLog.Borrower.Username<<endl;
+
+		if (recentLog.Fined)
+			outputfile<<"FINED.\n"<<endl;
+		else outputfile<<"NOT FINED.\n"<<endl;
+	}
+	outputfile.close();
+	filename.clear();
 }
