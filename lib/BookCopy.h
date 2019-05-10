@@ -2,6 +2,7 @@
 #define BOOKCOPY_H
 
 #include <bits/stdc++.h>
+#include <chrono>
 
 namespace MyLibrary
 {
@@ -16,8 +17,8 @@ public:
     int TitleId;
     int Shelf;
     int BorrowerId;
-	std::time_t StartDate;
-	std::time_t DueDate;
+	std::chrono::system_clock::time_point StartDate;
+	std::chrono::system_clock::time_point DueDate;
 };
 }
 

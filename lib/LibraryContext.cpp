@@ -1,4 +1,5 @@
 #include "LibraryContext.h"
+#include <chrono>
 using namespace std;
 using namespace MyLibrary;
 MyLibrary::LibraryContext::LibraryContext()
@@ -16,7 +17,7 @@ void MyLibrary::LibraryContext::readData()
 	string emptyline;
 
 	// add manager
-	filename = "Resources\Managers.txt";
+	filename = "Resources/Managers.txt";
 	inputfile.open(filename);
 
 	Manager recentManager;
@@ -36,7 +37,7 @@ void MyLibrary::LibraryContext::readData()
 	filename.clear();
 
 	// add student
-	filename = "Resouces\Students.txt";
+	filename = "Resources/Students.txt";
 	inputfile.open(filename);
 	Student recentStudent;
 
@@ -53,7 +54,7 @@ void MyLibrary::LibraryContext::readData()
 	filename.clear();
 
 	// add Book title
-	filename = "Resources\BookTitles.txt";
+	filename = "Resources/BookTitles.txt";
 	inputfile.open(filename);
 	BookTitle recentTitle;
 
@@ -70,17 +71,26 @@ void MyLibrary::LibraryContext::readData()
 	filename.clear();
 
 	// add Book Copy
-	filename = "Resources\BookCopies.txt";
+	filename = "Resources/BookCopies.txt";
 	inputfile.open(filename);
 	BookCopy recentCopy;
+	long long Start, Due;
+
 
 	while(!inputfile.eof()) {
 		inputfile >> recentCopy.Id;
 		inputfile >> recentCopy.TitleId;
 		inputfile >> recentCopy.Shelf;
 		inputfile >> recentCopy.BorrowerId;
-		inputfile >> recentCopy.StartDate;
-		inputfile >> recentCopy.DueDate;
+		inputfile >> Start;
+		inputfile >> Due;
+
+		chrono::duration<int> StartDur (Start * 1000000), DueDur (Due * 1000000);
+		chrono::system_clock::time_point StartPoint (StartDur);
+		chrono::system_clock::time_point DuePoint (DueDur);
+
+		recentCopy.StartDate = StartPoint;
+		recentCopy.DueDate = DuePoint;
 
 		addCopy(recentCopy);
 		getline(inputfile, emptyline);
@@ -91,7 +101,7 @@ void MyLibrary::LibraryContext::readData()
 
 	// add BorrowLog
 
-	filename = "Resources\BorrowLogs.txt";
+	filename = "Resources/BorrowLogs.txt";
 	inputfile.open(filename);
 
 	BorrowLog recentLog;
@@ -248,36 +258,58 @@ bool MyLibrary::LibraryContext::updateCopy(BookCopy bcopy)
 	return true;
 }
 
-bool MyLibrary::LibraryContext::makeBorrow(Student student, BookCopy brcopy)
+bool MyLibrary::LibraryContext::makeBorrow(int sid, int cid)
 {
-	for (auto brlog : _LogStorage)						//Check whether borrower is currently borrowing
-		if (brlog.second.Borrower.Id == student.Id)
+	if (_CopyStorage[cid].BorrowerId != 0)
+	{	
+		cout << "This copy has already been borrowed by someone else!" << endl;
+		return false;
+	}
+
+	shared_ptr<list<BookCopy>> borrowed = getCopiesByBorrowerId(sid);
+
+	for (auto bcopy : *borrowed)
+	{
+		if (chrono::system_clock::now().time_since_epoch().count() - bcopy.DueDate.time_since_epoch().count() > 0)
+		{
+			cout << "You have an copy overdue for return! Return to borrow a new book!" << endl;
 			return false;
-	
-	for (auto bcopy : _CopyStorage)
-		if (bcopy.second.Id == brcopy.Id)
-			return false;
+		}
+	}
 
 	BorrowLog newBorrow;
+	BookCopy bcopy = _CopyStorage[cid];
+	Student stu = _StudentStorage[sid];
 
 	newBorrow.Id = _LogStorage.rbegin()->second.Id + 1;
 	
-	newBorrow.Title.Id = brcopy.TitleId;
-	newBorrow.Title.Name = _TitleStorage[brcopy.TitleId].Name;
-	newBorrow.Title.Author = _TitleStorage[brcopy.TitleId].Author;
+	newBorrow.Title.Id = bcopy.TitleId;
+	newBorrow.Title.Name = _TitleStorage[bcopy.TitleId].Name;
+	newBorrow.Title.Author = _TitleStorage[bcopy.TitleId].Author;
 
-	newBorrow.Copy.Id = brcopy.Id;
-	newBorrow.Copy.TitleId = brcopy.TitleId;
-	newBorrow.Copy.Shelf = brcopy.Shelf;
-	newBorrow.Copy.BorrowerId = student.Id;
+	newBorrow.Copy.Id = bcopy.Id;
+	newBorrow.Copy.TitleId = bcopy.TitleId;
+	newBorrow.Copy.Shelf =bcopy.Shelf;
+	newBorrow.Copy.BorrowerId = stu.Id;
 
-	newBorrow.Borrower.Id = student.Id;
-	newBorrow.Borrower.Fullname = student.Fullname;
-	newBorrow.Borrower.Username = student.Username;
+	newBorrow.Borrower.Id = stu.Id;
+	newBorrow.Borrower.Fullname = stu.Fullname;
+	newBorrow.Borrower.Username = stu.Username;
+
+	newBorrow.Fined = false;
 
 	addLog(newBorrow);
-	removeCopy(brcopy.Id); //?
+
+	chrono::duration<int> DueTime (60*60*24*14);
+	bcopy.StartDate = chrono::time_point_cast<chrono::milliseconds>(chrono::system_clock::now());
+	bcopy.DueDate = bcopy.StartDate + DueTime;
+	bcopy.BorrowerId = stu.Id;
+
+	updateCopy(bcopy);
+	return true;
 }
+
+
 
 shared_ptr<Student> MyLibrary::LibraryContext::getStudent(int id)
 {
@@ -410,7 +442,7 @@ void MyLibrary::LibraryContext::writeData()
 	string filename;
 
 	//write manager
-	filename = "Managers.out";
+	filename = "Output/Managers.out";
 	outputfile.open (filename);
 
 	Manager recentManager;
@@ -425,7 +457,7 @@ void MyLibrary::LibraryContext::writeData()
 	filename.clear();
 
 	//write student
-	filename = "Students.out";
+	filename = "Output/Students.out";
 	outputfile.open(filename);
 
 	Student recentStudent;
@@ -440,7 +472,7 @@ void MyLibrary::LibraryContext::writeData()
 	filename.clear();
 
 	//write BookTitle
-	filename="BookTitles.out";
+	filename="Output/BookTitles.out";
 	outputfile.open(filename);
 
 	BookTitle recentTitle;
@@ -454,7 +486,7 @@ void MyLibrary::LibraryContext::writeData()
 	filename.clear();
 
 	//write bookcopy
-	filename="BookCopies.out";
+	filename="Output/BookCopies.out";
 	outputfile.open (filename);
 
 	BookCopy  recentCopy;
@@ -464,14 +496,16 @@ void MyLibrary::LibraryContext::writeData()
 		outputfile<<recentCopy.TitleId<<endl;
 		outputfile<<recentCopy.Shelf<<endl;
 		outputfile<<recentCopy.BorrowerId<<endl;
-		outputfile<<recentCopy.StartDate<<endl;
-		outputfile<<recentCopy.DueDate<<endl<<endl;
+		outputfile<<chrono::duration_cast<chrono::milliseconds>
+		(recentCopy.StartDate.time_since_epoch()).count()<<endl;
+		outputfile<<chrono::duration_cast<chrono::milliseconds>
+		(recentCopy.DueDate.time_since_epoch()).count()<<endl<<endl;
 	}
 	outputfile.close();
 	filename.clear();
 
 	//write borrowlog
-	filename="BorrowLogs.out";
+	filename="Output/BorrowLogs.out";
 	outputfile.open(filename);
 
 	BorrowLog recentLog;
