@@ -311,8 +311,8 @@ bool MyLibrary::LibraryContext::makeBorrow(int sid, int cid)
 
 bool MyLibrary::LibraryContext::releaseBorrow(int sid, int cid)
 {
-	if (_CopyStorage[cid].BorrowerId)
-	{
+	if (!_CopyStorage[cid].BorrowerId)
+	{	
 		cout << "No one is borrowing this copy!" << endl;
 		return false;
 	}
