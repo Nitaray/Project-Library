@@ -1,4 +1,5 @@
 #include "LibraryContext.h"
+#include <chrono>
 using namespace std;
 using namespace MyLibrary;
 MyLibrary::LibraryContext::LibraryContext()
@@ -16,7 +17,7 @@ void MyLibrary::LibraryContext::readData()
 	string emptyline;
 
 	// add manager
-	filename = "Managers.txt";
+	filename = "Resources/Managers.txt";
 	inputfile.open(filename);
 
 	Manager recentManager;
@@ -31,12 +32,12 @@ void MyLibrary::LibraryContext::readData()
 		addManager(recentManager);
 		getline(inputfile, emptyline);
 	}
-	cout<<"You've finished reading Manager.txt"<<endl;
+
 	inputfile.close();
 	filename.clear();
 
 	// add student
-	filename = "Students.txt";
+	filename = "Resources/Students.txt";
 	inputfile.open(filename);
 	Student recentStudent;
 
@@ -48,12 +49,12 @@ void MyLibrary::LibraryContext::readData()
 		addStudent(recentStudent);
 		getline(inputfile, emptyline);
 	}
-	cout<<"You've finished reading Students.txt"<<endl;
+
 	inputfile.close();
 	filename.clear();
 
 	// add Book title
-	filename = "BookTitles.txt";
+	filename = "Resources/BookTitles.txt";
 	inputfile.open(filename);
 	BookTitle recentTitle;
 
@@ -65,33 +66,42 @@ void MyLibrary::LibraryContext::readData()
 		addTitle(recentTitle);
 		getline(inputfile, emptyline);
 	}
-	cout<<"You've finished reading BookTitles.txt"<<endl;
+
 	inputfile.close();
 	filename.clear();
 
 	// add Book Copy
-	filename = "BookCopies.txt";
+	filename = "Resources/BookCopies.txt";
 	inputfile.open(filename);
 	BookCopy recentCopy;
+	long long Start, Due;
+
 
 	while(!inputfile.eof()) {
 		inputfile >> recentCopy.Id;
 		inputfile >> recentCopy.TitleId;
 		inputfile >> recentCopy.Shelf;
 		inputfile >> recentCopy.BorrowerId;
-		inputfile >> recentCopy.StartDate;
-		inputfile >> recentCopy.DueDate;
+		inputfile >> Start;
+		inputfile >> Due;
+
+		chrono::duration<int> StartDur (Start * 1000000), DueDur (Due * 1000000);
+		chrono::system_clock::time_point StartPoint (StartDur);
+		chrono::system_clock::time_point DuePoint (DueDur);
+
+		recentCopy.StartDate = StartPoint;
+		recentCopy.DueDate = DuePoint;
 
 		addCopy(recentCopy);
 		getline(inputfile, emptyline);
 	}
-	cout<<"You've finished reading BookCopies.txt"<<endl;
+
 	inputfile.close();
 	filename.clear();
 
 	// add BorrowLog
 
-	filename = "BorrowLogs.txt";
+	filename = "Resources/BorrowLogs.txt";
 	inputfile.open(filename);
 
 	BorrowLog recentLog;
@@ -117,6 +127,13 @@ void MyLibrary::LibraryContext::readData()
 		getline(inputfile, emptyline);
 		getline(inputfile, recentLog.Borrower.Fullname);
 		getline(inputfile, recentLog.Borrower.Username);
+
+		//fined
+		string line;
+		getline(inputfile,line);
+		if (line=="FINED")
+			recentLog.Fined=true;
+		else recentLog.Fined=false;
 
 		addLog(recentLog);
 
@@ -238,6 +255,101 @@ bool MyLibrary::LibraryContext::updateCopy(BookCopy bcopy)
 	removeCopy(bcopy.Id);
 	addCopy(bcopy);
 
+	return true;
+}
+
+bool MyLibrary::LibraryContext::makeBorrow(int sid, int cid)
+{
+	if (_CopyStorage[cid].BorrowerId)
+	{	
+		cout << "This copy has already been borrowed by someone else!" << endl;
+		return false;
+	}
+
+	shared_ptr<list<BookCopy>> borrowed = getCopiesByBorrowerId(sid);
+
+	for (auto bcopy : *borrowed)
+	{
+		if (chrono::system_clock::now().time_since_epoch().count() - bcopy.DueDate.time_since_epoch().count() > 0)
+		{
+			cout << "You have an copy overdue for return! Return to borrow a new book!" << endl;
+			return false;
+		}
+	}
+
+	BorrowLog newBorrow;
+	BookCopy bcopy = _CopyStorage[cid];
+	Student stu = _StudentStorage[sid];
+
+	newBorrow.Id = _LogStorage.rbegin()->second.Id + 1;
+	
+	newBorrow.Title.Id = bcopy.TitleId;
+	newBorrow.Title.Name = _TitleStorage[bcopy.TitleId].Name;
+	newBorrow.Title.Author = _TitleStorage[bcopy.TitleId].Author;
+
+	newBorrow.Copy.Id = bcopy.Id;
+	newBorrow.Copy.TitleId = bcopy.TitleId;
+	newBorrow.Copy.Shelf =bcopy.Shelf;
+	newBorrow.Copy.BorrowerId = stu.Id;
+
+	newBorrow.Borrower.Id = stu.Id;
+	newBorrow.Borrower.Fullname = stu.Fullname;
+	newBorrow.Borrower.Username = stu.Username;
+
+	newBorrow.Fined = false;
+
+	addLog(newBorrow);
+
+	chrono::duration<int> DueTime (60*60*24*14);
+	bcopy.StartDate = chrono::time_point_cast<chrono::milliseconds>(chrono::system_clock::now());
+	bcopy.DueDate = bcopy.StartDate + DueTime;
+	bcopy.BorrowerId = stu.Id;
+
+	updateCopy(bcopy);
+	return true;
+}
+
+bool MyLibrary::LibraryContext::releaseBorrow(int sid, int cid)
+{
+	if (_CopyStorage[cid].BorrowerId)
+	{
+		cout << "No one is borrowing this copy!" << endl;
+		return false;
+	}
+
+	BookCopy bcopy = _CopyStorage[cid];
+	Student stu = _StudentStorage[sid];
+	BorrowLog releaseLog;
+	bool Fined = false;
+
+	if (chrono::system_clock::now().time_since_epoch().count() - bcopy.DueDate.time_since_epoch().count() > 0)
+	{
+		cout << "You've returned an overdue book! Please pay the fine at the librarian!" << endl;
+		Fined = true;
+	}
+
+	releaseLog.Id = _LogStorage.rbegin()->second.Id + 1;
+
+	releaseLog.Title.Id = bcopy.TitleId;
+	releaseLog.Title.Name = _TitleStorage[bcopy.TitleId].Name;
+	releaseLog.Title.Author = _TitleStorage[bcopy.TitleId].Author;
+
+	releaseLog.Copy.Id = bcopy.Id;
+	releaseLog.Copy.TitleId = bcopy.TitleId;
+	releaseLog.Copy.Shelf =bcopy.Shelf;
+	releaseLog.Copy.BorrowerId = stu.Id;
+
+	releaseLog.Borrower.Id = stu.Id;
+	releaseLog.Borrower.Fullname = stu.Fullname;
+	releaseLog.Borrower.Username = stu.Username;
+
+	releaseLog.Fined = Fined;
+
+	addLog(releaseLog);
+
+	bcopy.BorrowerId = 0;
+
+	updateCopy(bcopy);
 	return true;
 }
 
@@ -368,5 +480,99 @@ shared_ptr<list<BookCopy>> MyLibrary::LibraryContext::getCopiesByBorrowerId(int 
 
 void MyLibrary::LibraryContext::writeData()
 {
-	
+	ofstream outputfile;
+	string filename;
+
+	//write manager
+	filename = "Output/Managers.out";
+	outputfile.open (filename);
+
+	Manager recentManager;
+	for (auto it : _ManagerStorage) {
+		recentManager=it.second;
+		outputfile<<recentManager.Id<<endl;
+		outputfile<<recentManager.Fullname<<endl;
+		outputfile<<recentManager.Username<<endl;
+		outputfile<<recentManager.Password<<endl<<endl;
+	}
+	outputfile.close();
+	filename.clear();
+
+	//write student
+	filename = "Output/Students.out";
+	outputfile.open(filename);
+
+	Student recentStudent;
+	for(auto it: _StudentStorage) {
+		recentStudent=it.second;
+		outputfile<<recentStudent.Id<<endl;
+		outputfile<<recentStudent.Fullname<<endl;
+		outputfile<<recentStudent.Username<<endl<<endl;
+
+	}
+	outputfile.close();
+	filename.clear();
+
+	//write BookTitle
+	filename="Output/BookTitles.out";
+	outputfile.open(filename);
+
+	BookTitle recentTitle;
+	for (auto it: _TitleStorage) {
+		recentTitle=it.second;
+		outputfile<<recentTitle.Id<<endl;
+		outputfile<<recentTitle.Name<<endl;
+		outputfile<<recentTitle.Author<<endl<<endl;
+	}
+	outputfile.close();
+	filename.clear();
+
+	//write bookcopy
+	filename="Output/BookCopies.out";
+	outputfile.open (filename);
+
+	BookCopy  recentCopy;
+	for (auto it : _CopyStorage) {
+		recentCopy=it.second;
+		outputfile<<recentCopy.Id<<endl;
+		outputfile<<recentCopy.TitleId<<endl;
+		outputfile<<recentCopy.Shelf<<endl;
+		outputfile<<recentCopy.BorrowerId<<endl;
+		outputfile<<chrono::duration_cast<chrono::milliseconds>
+		(recentCopy.StartDate.time_since_epoch()).count()<<endl;
+		outputfile<<chrono::duration_cast<chrono::milliseconds>
+		(recentCopy.DueDate.time_since_epoch()).count()<<endl<<endl;
+	}
+	outputfile.close();
+	filename.clear();
+
+	//write borrowlog
+	filename="Output/BorrowLogs.out";
+	outputfile.open(filename);
+
+	BorrowLog recentLog;
+	for (auto it:_LogStorage) {
+		recentLog=it.second;
+
+		outputfile<<recentLog.Id<<endl;
+
+		outputfile<<recentLog.Title.Id<<endl;
+		outputfile<<recentLog.Title.Name<<endl;
+		outputfile<<recentLog.Title.Author<<endl;
+
+		outputfile<<recentLog.Copy.Id<<endl;
+		outputfile<<recentLog.Copy.TitleId<<endl;
+		outputfile<<recentLog.Copy.Shelf<<endl;
+		outputfile<<recentLog.Copy.BorrowerId<<endl;
+
+		outputfile<<recentLog.Borrower.Id<<endl;
+		outputfile<<recentLog.Borrower.Fullname<<endl;
+		outputfile<<recentLog.Borrower.Username<<endl;
+
+		if (recentLog.Fined)
+			outputfile<<"FINED.\n"<<endl;
+		else outputfile<<"NOT FINED.\n"<<endl;
+	}
+	outputfile.close();
+	filename.clear();
 }

@@ -29,6 +29,8 @@ private:
 	std::set<std::tuple<std::string, int>> _TitleAuthorIndex;
 	std::set<std::tuple<int, int>> _CopyTitleIdIndex;
 	std::set<std::tuple<int, int>> _CopyBorrowerIdIndex;
+
+
 	
 	
 public:
@@ -48,6 +50,9 @@ public:
 	void removeCopy(int id);
 	
 	bool updateCopy(BookCopy bcopy);
+
+    bool makeBorrow(int sid, int cid);
+    bool releaseBorrow(int sid, int cid);
 	
     std::shared_ptr<Student> getStudent(int id);
     std::shared_ptr<BookTitle> getTitle(int id);
@@ -60,7 +65,7 @@ public:
     std::shared_ptr<std::list<BookTitle>> getTitles(std::string pattern);
 	std::shared_ptr<std::list<int>> getCopyIdsByTitleId(int id);
     std::shared_ptr<std::list<BookCopy>> getFreeCopiesByTitleId(int id);
-    std::shared_ptr<std::list<BookCopy>> getCopiesByBorrowerId(int id);
+    std::shared_ptr<std::list<BookCopy>> getCopiesByBorrowerId(int id); 
 
 };
 }
