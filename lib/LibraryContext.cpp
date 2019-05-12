@@ -258,99 +258,91 @@ bool MyLibrary::LibraryContext::updateCopy(BookCopy bcopy)
 	return true;
 }
 
-bool MyLibrary::LibraryContext::makeBorrow(int sid, int cid)
+int MyLibrary::LibraryContext::makeBorrow(int sid, int cid)
 {
-	if (_CopyStorage[cid].BorrowerId)
-	{	
-		cout << "This copy has already been borrowed by someone else!" << endl;
-		return false;
-	}
-
+	shared_ptr<BookCopy> bcopy = getCopy(cid);;
+	shared_ptr<Student> stu = getStudent(sid);
 	shared_ptr<list<BookCopy>> borrowed = getCopiesByBorrowerId(sid);
 
-	for (auto bcopy : *borrowed)
-	{
-		if (chrono::system_clock::now().time_since_epoch().count() - bcopy.DueDate.time_since_epoch().count() > 0)
-		{
-			cout << "You have an copy overdue for return! Return to borrow a new book!" << endl;
-			return false;
-		}
-	}
+	if (bcopy->BorrowerId)	
+		return 1; // cout << "This copy has already been borrowed by someone else!" << endl;
+
+	for (auto brcopy : *borrowed)
+		if (chrono::system_clock::now().time_since_epoch().count() - brcopy.DueDate.time_since_epoch().count() > 0)
+			return 2; // cout << "You have an copy overdue for return! Return to borrow a new book!" << endl;
 
 	BorrowLog newBorrow;
-	BookCopy bcopy = _CopyStorage[cid];
-	Student stu = _StudentStorage[sid];
 
 	newBorrow.Id = _LogStorage.rbegin()->second.Id + 1;
 	
-	newBorrow.Title.Id = bcopy.TitleId;
-	newBorrow.Title.Name = _TitleStorage[bcopy.TitleId].Name;
-	newBorrow.Title.Author = _TitleStorage[bcopy.TitleId].Author;
+	newBorrow.Title.Id = bcopy->TitleId;
+	newBorrow.Title.Name = _TitleStorage[bcopy->TitleId].Name;
+	newBorrow.Title.Author = _TitleStorage[bcopy->TitleId].Author;
 
-	newBorrow.Copy.Id = bcopy.Id;
-	newBorrow.Copy.TitleId = bcopy.TitleId;
-	newBorrow.Copy.Shelf =bcopy.Shelf;
-	newBorrow.Copy.BorrowerId = stu.Id;
+	newBorrow.Copy.Id = bcopy->Id;
+	newBorrow.Copy.TitleId = bcopy->TitleId;
+	newBorrow.Copy.Shelf =bcopy->Shelf;
+	newBorrow.Copy.BorrowerId = stu->Id;
 
-	newBorrow.Borrower.Id = stu.Id;
-	newBorrow.Borrower.Fullname = stu.Fullname;
-	newBorrow.Borrower.Username = stu.Username;
+	newBorrow.Borrower.Id = stu->Id;
+	newBorrow.Borrower.Fullname = stu->Fullname;
+	newBorrow.Borrower.Username = stu->Username;
 
 	newBorrow.Fined = false;
 
 	addLog(newBorrow);
 
 	chrono::duration<int> DueTime (60*60*24*14);
-	bcopy.StartDate = chrono::time_point_cast<chrono::milliseconds>(chrono::system_clock::now());
-	bcopy.DueDate = bcopy.StartDate + DueTime;
-	bcopy.BorrowerId = stu.Id;
+	bcopy->StartDate = chrono::time_point_cast<chrono::milliseconds>(chrono::system_clock::now());
+	bcopy->DueDate = bcopy->StartDate + DueTime;
+	bcopy->BorrowerId = stu->Id;
 
-	updateCopy(bcopy);
-	return true;
+	updateCopy(*bcopy);
+	return 0; // cout << "Borrowed successfully!" << endl;
 }
 
-bool MyLibrary::LibraryContext::releaseBorrow(int sid, int cid)
+int MyLibrary::LibraryContext::releaseBorrow(int sid, int cid)
 {
-	if (!_CopyStorage[cid].BorrowerId)
-	{	
-		cout << "No one is borrowing this copy!" << endl;
-		return false;
-	}
 
-	BookCopy bcopy = _CopyStorage[cid];
-	Student stu = _StudentStorage[sid];
+	shared_ptr<BookCopy> bcopy = getCopy(cid);
+	shared_ptr<Student> stu = getStudent(sid);
+
+	if (!bcopy->BorrowerId)	
+		return 1;			// cout << "No one is borrowing this copy!" << endl;
+
 	BorrowLog releaseLog;
 	bool Fined = false;
 
-	if (chrono::system_clock::now().time_since_epoch().count() - bcopy.DueDate.time_since_epoch().count() > 0)
-	{
-		cout << "You've returned an overdue book! Please pay the fine at the librarian!" << endl;
-		Fined = true;
-	}
+	if (chrono::system_clock::now().time_since_epoch().count() - bcopy->DueDate.time_since_epoch().count() > 0)
+		Fined = true; 
 
 	releaseLog.Id = _LogStorage.rbegin()->second.Id + 1;
 
-	releaseLog.Title.Id = bcopy.TitleId;
-	releaseLog.Title.Name = _TitleStorage[bcopy.TitleId].Name;
-	releaseLog.Title.Author = _TitleStorage[bcopy.TitleId].Author;
+	releaseLog.Title.Id = bcopy->TitleId;
+	releaseLog.Title.Name = _TitleStorage[bcopy->TitleId].Name;
+	releaseLog.Title.Author = _TitleStorage[bcopy->TitleId].Author;
 
-	releaseLog.Copy.Id = bcopy.Id;
-	releaseLog.Copy.TitleId = bcopy.TitleId;
-	releaseLog.Copy.Shelf =bcopy.Shelf;
-	releaseLog.Copy.BorrowerId = stu.Id;
+	releaseLog.Copy.Id = bcopy->Id;
+	releaseLog.Copy.TitleId = bcopy->TitleId;
+	releaseLog.Copy.Shelf =bcopy->Shelf;
+	releaseLog.Copy.BorrowerId = stu->Id;
 
-	releaseLog.Borrower.Id = stu.Id;
-	releaseLog.Borrower.Fullname = stu.Fullname;
-	releaseLog.Borrower.Username = stu.Username;
+	releaseLog.Borrower.Id = stu->Id;
+	releaseLog.Borrower.Fullname = stu->Fullname;
+	releaseLog.Borrower.Username = stu->Username;
 
 	releaseLog.Fined = Fined;
 
 	addLog(releaseLog);
 
-	bcopy.BorrowerId = 0;
+	bcopy->BorrowerId = 0;
 
-	updateCopy(bcopy);
-	return true;
+	updateCopy(*bcopy);
+	
+	if (Fined)
+		return 2; // cout << "You've returned an overdue book! Please pay the fine at the librarian!" << endl;
+
+	return 0; // cout << "Book returned!" << endl;
 }
 
 shared_ptr<Student> MyLibrary::LibraryContext::getStudent(int id)
