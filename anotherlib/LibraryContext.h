@@ -53,9 +53,10 @@ public:
 
     int makeBorrow(int sid, int cid);
     int releaseBorrow(int sid, int cid);
-    std::string getDate(int cid, bool type);         //pass "true" in type for StartDate, "false" for DueDate
+    int getInput();
     void printMSG(std::string fileDir);
     void login();
+    std::string getDate(int cid, bool type);         //pass "true" in type for StartDate, "false" for DueDate
 	
     std::shared_ptr<Student> getStudent(int id);
     std::shared_ptr<BookTitle> getTitle(int id);

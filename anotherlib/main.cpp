@@ -16,9 +16,8 @@ int main(int argc, char **argv)
 	system("PAUSE");
 loop:
 	lib.printMSG("Resources/Options.txt");
-	int options;
 	cout << "Please enter the option ID: ";
-	cin >> options;
+	int options = lib.getInput();
 	cout << endl;
 	int ID;
 	string patterns;
@@ -28,10 +27,12 @@ loop:
 	switch (options) 
 	{
 		case 1: {
+			system("CLS");
+			cout << "Books in storage: " << endl;
 			auto book_list = lib.getTitles();
-			for (auto &titles: *book_list) cout << titles.Id<<"-"<< titles.Name << "\n";
+			for (auto &titles: *book_list) cout << titles.Id<<" - "<< titles.Name << "\n";
 			cout << "Please enter the book ID to remove the book: ";
-			cin >> ID;
+			ID = lib.getInput();
 			lib.removeTitle(ID);
 			book_list = lib.getTitles();
 			for (auto &titles: *book_list) cout << titles.Name << "\n";
@@ -42,8 +43,9 @@ loop:
 			break;
 		}
 		case 2: {
+			system("CLS");
 			cout << "Please enter student ID: ";
-			cin >> ID;
+			ID = lib.getInput();
 			students = lib.getStudent(ID);
 			if (students == nullptr) cout << "Student ID not found.\n";
 			//trả về shared_ptr, nếu == null in ra kh được, nếu có thì in ra Username và Fullname.
@@ -53,6 +55,7 @@ loop:
 			break;
 		}
 		case 3: {
+			system("CLS");
 			auto book_titles = lib.getTitles();
 			for (auto &title: *book_titles)
 				cout << title.Name << "\n";
@@ -61,8 +64,9 @@ loop:
 			break;
 		}
 		case 4: {
+			system("CLS");
 			cout << "Please enter book ID: ";
-			cin >> ID;
+			ID = lib.getInput();
 			books = lib.getTitle(ID);
 			if (books == nullptr) cout << "Book ID is not found.\n";
 			//trả về shared_ptr, nếu == null in ra kh được, nếu có thì in ra Username và Fullname.
@@ -72,6 +76,7 @@ loop:
 			break;
 		}
 		case 5: {
+			system("CLS");
 			cout << "Please enter book name: ";
 			cin >> patterns;
 			auto title_list = lib.getTitles(patterns);
@@ -84,8 +89,9 @@ loop:
 			break;
 		}
 		case 6: {
+			system("CLS");
 			cout << "Please enter book ID: ";
-			cin >> ID;
+			ID = lib.getInput();
 			auto book_copy = lib.getCopyIdsByTitleId(ID);
 			if (!book_copy->size()) {
 				cout << "This title does not have any copies.\n";
@@ -98,8 +104,9 @@ loop:
 			break;
 		}
 		case 7: {
+			system("CLS");
 			cout << "Please enter book ID: ";
-			cin >> ID;
+			ID = lib.getInput();
 			auto book_free = lib.getFreeCopiesByTitleId(ID);
 			if (!book_free->size()) cout << "There are no available books with this ID.\n";
 			//trả về shared_ptr, nếu == null in ra kh được, nếu có thì in ra Username và Fullname.
@@ -110,8 +117,9 @@ loop:
 			break;
 		}
 		case 8: {
+			system("CLS");
 			cout << "Please enter borrower ID: ";
-			cin >> ID;
+			ID = lib.getInput();
 			auto book_borrow = lib.getCopiesByBorrowerId(ID);
 			if (!book_borrow->size()) cout << "This ID is not borrowing any books.\n";
 			//trả về shared_ptr, nếu == null in ra kh được, nếu có thì in ra Username và Fullname.
@@ -123,9 +131,13 @@ loop:
 			break;
 		}
 		case 9: {
-			cout << "Please enter borrower's ID and book copy's ID to lend book: ";
+			system("CLS");
 			int cid, sid;
-			cin >> sid >> cid;
+			cout << "Please enter borrower's ID: ";
+			sid = lib.getInput();
+			cout << endl;
+			cout << "Please enter copy's ID: ";
+			cid = lib.getInput();
 			cout << endl;
 			int returnvals = lib.makeBorrow(sid,cid);
 			if (returnvals==1) {
@@ -148,9 +160,13 @@ loop:
 			break;
 		}
 		case 10: {
-			cout<<"Please enter borrower's ID and book copy's ID to release borrow: ";
-			int cid, sid;
-			cin >> sid >> cid;
+			system("CLS");
+			int sid, cid;
+			cout << "Please enter borrower's ID: ";
+			sid = lib.getInput();
+			cout << endl;
+			cout << "Please enter copy's ID: ";
+			cid = lib.getInput();
 			cout << endl;
 			int returnvals=lib.releaseBorrow(sid,cid);
 			if (returnvals==1) {
@@ -171,6 +187,7 @@ loop:
 			break;
 		}
 		case 11: {
+			system("CLS");
 			lib.writeData();
 			cout<<"Data written in output file."<<endl;
 			system("PAUSE");

@@ -10,5 +10,5 @@
 *        9. Make a new borrow.                                     *
 *        10. Return a borrowed book.                               *
 *        11. Write data to database.                               *
-*        12. Exit (using any number).                              *
+*        12. Exit (using any other number).                        *
 ********************************************************************

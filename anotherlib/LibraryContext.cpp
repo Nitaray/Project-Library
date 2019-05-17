@@ -356,6 +356,22 @@ int MyLibrary::LibraryContext::releaseBorrow(int sid, int cid)
 	return 0; // cout << "Book returned!" << endl;
 }
 
+int MyLibrary::LibraryContext::getInput()
+{
+	string input;
+wrong:
+	cin >> input;
+	for (int i = 0; i < input.length(); i++)
+	{
+		if (!isdigit(input[i]))
+		{
+			cout << "Invalid input! Please input an integer: ";
+			goto wrong;
+		}
+	}
+	return stoi(input);
+}
+
 string MyLibrary::LibraryContext::getDate(int cid, bool type)
 {
 	shared_ptr<BookCopy> bcopy = getCopy(cid);
