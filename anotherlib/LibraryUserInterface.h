@@ -20,6 +20,7 @@ public:
 	void printMSG(std::string fileDir);
 	void login();
 	void run();
+	int getInput();
 };
 }
 
