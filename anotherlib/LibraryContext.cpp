@@ -1,5 +1,6 @@
 #include "LibraryContext.h"
 #include <chrono>
+#include <conio.h>
 using namespace std;
 using namespace MyLibrary;
 MyLibrary::LibraryContext::LibraryContext()
@@ -260,8 +261,13 @@ bool MyLibrary::LibraryContext::updateCopy(BookCopy bcopy)
 
 int MyLibrary::LibraryContext::makeBorrow(int sid, int cid)
 {
-	shared_ptr<BookCopy> bcopy = getCopy(cid);;
+	shared_ptr<BookCopy> bcopy = getCopy(cid);
+	if (bcopy == nullptr)
+		return 3; 					//print out invalid copy id.
 	shared_ptr<Student> stu = getStudent(sid);
+	if (stu == nullptr)
+		return 4;					//print out invalid student id.
+
 	shared_ptr<list<BookCopy>> borrowed = getCopiesByBorrowerId(sid);
 	shared_ptr<BookTitle> title = getTitle(bcopy->TitleId);
 
@@ -304,9 +310,13 @@ int MyLibrary::LibraryContext::makeBorrow(int sid, int cid)
 
 int MyLibrary::LibraryContext::releaseBorrow(int sid, int cid)
 {
-
 	shared_ptr<BookCopy> bcopy = getCopy(cid);
+	if (bcopy == nullptr)
+		return 3; 					//print out invalid copy id.
 	shared_ptr<Student> stu = getStudent(sid);
+	if (stu == nullptr)
+		return 4;					//print out invalid student id.
+
 	shared_ptr<BookTitle> title = getTitle(bcopy->TitleId);
 	if (!bcopy->BorrowerId)
 		return 1;			// cout << "No one is borrowing this copy!" << endl;
@@ -325,7 +335,7 @@ int MyLibrary::LibraryContext::releaseBorrow(int sid, int cid)
 
 	releaseLog.Copy.Id = bcopy->Id;
 	releaseLog.Copy.TitleId = bcopy->TitleId;
-	releaseLog.Copy.Shelf =bcopy->Shelf;
+	releaseLog.Copy.Shelf = bcopy->Shelf;
 	releaseLog.Copy.BorrowerId = stu->Id;
 
 	releaseLog.Borrower.Id = stu->Id;
@@ -344,6 +354,82 @@ int MyLibrary::LibraryContext::releaseBorrow(int sid, int cid)
 		return 2; // cout << "You've returned an overdue book! Please pay the fine at the librarian!" << endl;
 
 	return 0; // cout << "Book returned!" << endl;
+}
+
+string MyLibrary::LibraryContext::getDate(int cid, bool type)
+{
+	shared_ptr<BookCopy> bcopy = getCopy(cid);
+	if (bcopy == nullptr)
+		return "Invalid copy id";
+	
+	time_t date;
+	if (type)
+		date = chrono::system_clock::to_time_t(bcopy->StartDate);
+	else
+		date = chrono::system_clock::to_time_t(bcopy->DueDate);
+	return ctime(&date);
+}
+
+void MyLibrary::LibraryContext::printMSG(string fileDir)
+{
+	ifstream ifile(fileDir);
+	if (!ifile.is_open())
+	{
+		cout << "Message file not found!" << endl;
+		return;
+	}
+	string line;
+	system("CLS");
+	for (;getline(ifile,line);)
+		cout << line << endl;
+}
+
+void MyLibrary::LibraryContext::login()
+{
+	shared_ptr<Manager>tempman;
+	string in_username, in_password;
+	int ch;
+wrong:
+	cout << "Please log in.\n\n";
+	cout << "Username: ";
+	cin >> in_username;
+
+	//check if in_username is valid
+	while (!getManager(in_username)) { 
+		cout << "Invalid Username. Please input username again: ";
+		cin >> in_username;
+		cout << endl;
+	}
+	tempman = getManager(in_username); 
+	cout << "Password: ";
+	while (ch = getch())
+	{
+		switch(ch)
+		{
+			case 8:
+				if (in_password.length() > 0)
+				{
+					cout << "\b \b";
+					in_password.erase(in_password.length() - 1);
+				}
+				break;
+			case 13:
+				cout << endl;
+				if (tempman -> Password != in_password) {
+					cout << "Wrong password or username. Please retry!\n\n";
+					in_password = "";
+					goto wrong;
+				}
+				else goto right;
+				break;
+			default:
+				cout << "*";
+				in_password += ch;
+				break;
+		}
+	}
+right:
+	cout << "\nLogin successfully!\n";
 }
 
 shared_ptr<Student> MyLibrary::LibraryContext::getStudent(int id)

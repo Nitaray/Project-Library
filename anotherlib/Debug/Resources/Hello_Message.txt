@@ -1,0 +1,10 @@
+**************************************************************************
+*                      WELCOME TO THE LIBRARY SYSTEM                     *
+*                                                                        *
+*                              PROJECT-LIBRARY                           *
+*                               (Copyrighted)                            *
+*                                                                        *
+*                      Developed by Group 5 - ITITIUK18                  *
+*                                                                        *
+*                        See readme.txt for more info                    *
+**************************************************************************
