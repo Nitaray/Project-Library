@@ -1,0 +1,14 @@
+********************************************************************
+*        1. Remove a book from the library.                        *
+*        2. Obtain student information (using student ID).         *
+*        3. List all of the book titles.                           *
+*        4. Obtain book information by book copy ID.               *
+*        5. Search for books.                                      *
+*        6. Obtain book copy information by Title ID.              *
+*        7. Obtain available copies by Title ID.                   *
+*        8. Obtain borrowing information (using student ID).       *
+*        9. Make a new borrow.                                     *
+*        10. Return a borrowed book.                               *
+*        11. Write data to database.                               *
+*        12. Exit (using any number).                              *
+********************************************************************
