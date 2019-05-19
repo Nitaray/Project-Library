@@ -140,7 +140,7 @@ loop:
 			system("CLS");
 			auto book_titles = lib.getTitles();
 			for (auto &title: *book_titles)
-				cout << title.Name << "\n";
+				cout <<title.Id<<" - "<< title.Name << "\n";
 			system("PAUSE");
 			goto loop;
 			break;
@@ -167,7 +167,7 @@ loop:
 			if (!title_list->size()) cout << "Book " << patterns << " is not found.\n";
 			
 			for (auto &book: *title_list)
-				cout <<book.Name << " - " << book.Author << "\n";
+				cout <<book.Id<<" - "<<book.Name << " - " << book.Author << "\n";
 			system("PAUSE");
 			goto loop;
 			break;
