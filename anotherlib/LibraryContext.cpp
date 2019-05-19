@@ -18,7 +18,7 @@ void MyLibrary::LibraryContext::readData()
 	string emptyline;
 
 	// add manager
-	filename = "Resources/Managers.txt";
+	filename = "Resource_gen/Managers.txt";
 	inputfile.open(filename);
 
 	Manager recentManager;
@@ -38,7 +38,7 @@ void MyLibrary::LibraryContext::readData()
 	filename.clear();
 
 	// add student
-	filename = "Resources/Students.txt";
+	filename = "Resource_gen/Students.txt";
 	inputfile.open(filename);
 	Student recentStudent;
 
@@ -55,10 +55,10 @@ void MyLibrary::LibraryContext::readData()
 	filename.clear();
 
 	// add Book title
-	filename = "Resources/BookTitles.txt";
+	filename = "Resource_gen/BookTitles.txt";
 	inputfile.open(filename);
 	BookTitle recentTitle;
-
+	
 	while(!inputfile.eof()) {
 		inputfile >> recentTitle.Id;
 		getline(inputfile, emptyline);
@@ -67,12 +67,12 @@ void MyLibrary::LibraryContext::readData()
 		addTitle(recentTitle);
 		getline(inputfile, emptyline);
 	}
-
+	
 	inputfile.close();
 	filename.clear();
-
+	
 	// add Book Copy
-	filename = "Resources/BookCopies.txt";
+	filename = "Resource_gen/BookCopies.txt";
 	inputfile.open(filename);
 	BookCopy recentCopy;
 	long long Start, Due;
@@ -102,7 +102,7 @@ void MyLibrary::LibraryContext::readData()
 
 	// add BorrowLog
 
-	filename = "Resources/BorrowLogs.txt";
+	filename = "Resource_gen/BorrowLogs.txt";
 	inputfile.open(filename);
 
 	BorrowLog recentLog;
@@ -207,7 +207,6 @@ bool MyLibrary::LibraryContext::addLog(BorrowLog brlog)
 		return false;
 
 	_LogStorage[brlog.Id] = brlog;
-
 	return true;
 }
 
@@ -217,17 +216,14 @@ void MyLibrary::LibraryContext::removeTitle(int id)
 		return;
 
 	BookTitle& current = _TitleStorage[id];
-
 	auto nameindexpair = make_tuple(current.Name, id);
 	auto authorindexpair = make_tuple(current.Author, id);
 
 	_TitleNameIndex.erase(nameindexpair);
 	_TitleAuthorIndex.erase(authorindexpair);
-
 	_TitleStorage.erase(id);
 
 	auto plist = getCopyIdsByTitleId(id);
-
 	for(auto& cid :* plist)
 		removeCopy(cid);
 }
@@ -238,13 +234,11 @@ void MyLibrary::LibraryContext::removeCopy(int id)
 		return;
 
 	BookCopy& copy = _CopyStorage[id];
-
 	auto titleindexpair = make_tuple(copy.TitleId, id);
 	auto borrowerindexpair = make_tuple(copy.BorrowerId, id);
 
 	_CopyTitleIdIndex.erase(titleindexpair);
 	_CopyBorrowerIdIndex.erase(borrowerindexpair);
-
 	_CopyStorage.erase(id);
 }
 
@@ -255,7 +249,6 @@ bool MyLibrary::LibraryContext::updateCopy(BookCopy bcopy)
 
 	removeCopy(bcopy.Id);
 	addCopy(bcopy);
-
 	return true;
 }
 
@@ -263,10 +256,12 @@ int MyLibrary::LibraryContext::makeBorrow(int sid, int cid)
 {
 	shared_ptr<BookCopy> bcopy = getCopy(cid);
 	if (bcopy == nullptr)
-		return 3; 					//print out invalid copy id.
+		return 3; 	//print out invalid copy id.
+		
 	shared_ptr<Student> stu = getStudent(sid);
 	if (stu == nullptr)
-		return 4;					//print out invalid student id.
+		return 4;	//print out invalid student id.
+		
 	shared_ptr<list<BookCopy>> borrowed = getCopiesByBorrowerId(sid);
 	shared_ptr<BookTitle> title = getTitle(bcopy->TitleId);
 
@@ -312,11 +307,11 @@ int MyLibrary::LibraryContext::releaseBorrow(int sid, int cid)
 
 	shared_ptr<BookCopy> bcopy = getCopy(cid);
 	if (bcopy == nullptr)
-		return 3; 					//print out invalid copy id.
-
+		return 3; 		//print out invalid copy id.
+		
 	shared_ptr<Student> stu = getStudent(sid);
 	if (stu == nullptr)
-		return 4;					//print out invalid student id.
+		return 4;		//print out invalid student id.
 
 	shared_ptr<BookTitle> title = getTitle(bcopy->TitleId);
 	if (!bcopy->BorrowerId)
@@ -398,6 +393,7 @@ shared_ptr<BookTitle> MyLibrary::LibraryContext::getTitle(int id)
 shared_ptr<BookCopy> MyLibrary::LibraryContext::getCopy(int id)
 {
 	shared_ptr<BookCopy> result;
+	
 	if (!_CopyStorage.count(id))
 		return result;
 
@@ -443,13 +439,13 @@ shared_ptr<list<BookTitle>> MyLibrary::LibraryContext::getTitles()
 shared_ptr<list<BookTitle>> MyLibrary::LibraryContext::getTitles(string pattern)
 {
 	shared_ptr<list<BookTitle>> result (new list<BookTitle>);
-
+	
 	auto lb=_TitleNameIndex.lower_bound(make_tuple(pattern,-1));
 	pattern[pattern.size()-1]++;
 	auto ub=_TitleNameIndex.upper_bound(make_tuple(pattern,-1));
 
 	for (auto& it=lb; it!=ub; it++) {
-		auto id=get<1> (*it);//remember parenthesis tells the range of tuple
+		auto id=get<1> (*it);	//remember parenthesis tells the range of tuple
 		result->push_back(_TitleStorage[id]);
 	}
 
@@ -470,18 +466,6 @@ shared_ptr<list<int>> MyLibrary::LibraryContext::getCopyIdsByTitleId(int id)
 	return result;
 }
 
-shared_ptr<list<BookCopy>> MyLibrary::LibraryContext::getFreeCopiesByTitleId(int id)
-{
-	shared_ptr<list<BookCopy>> result (new list<BookCopy>);
-	shared_ptr<list<int>> tempCopy=getCopyIdsByTitleId(id);
-	for (auto& cid:*tempCopy) {
-		BookCopy bcopy=_CopyStorage[cid];
-		if (bcopy.BorrowerId==0)
-			result-> push_back(bcopy);
-	}
-	return result;
-}
-
 shared_ptr<list<BookCopy>> MyLibrary::LibraryContext::getCopiesByBorrowerId(int id)
 {
 	shared_ptr<list<BookCopy>> result (new list<BookCopy>);
@@ -492,6 +476,19 @@ shared_ptr<list<BookCopy>> MyLibrary::LibraryContext::getCopiesByBorrowerId(int 
 	for (auto& it=lb; it!=ub; it++) {
 		auto cid=get<1> (*it);
 		result->push_back(_CopyStorage[cid]);
+	}
+	return result;
+}
+
+shared_ptr<list<BookCopy>> MyLibrary::LibraryContext::getFreeCopiesByTitleId(int id)
+{
+	shared_ptr<list<BookCopy>> result (new list<BookCopy>);
+	shared_ptr<list<int>> tempCopy=getCopyIdsByTitleId(id);
+	
+	for (auto& cid:*tempCopy) {
+		BookCopy bcopy=_CopyStorage[cid];
+		if (bcopy.BorrowerId==0)
+			result-> push_back(bcopy);
 	}
 	return result;
 }

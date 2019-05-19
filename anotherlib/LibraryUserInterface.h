@@ -18,9 +18,9 @@ public:
 	LibraryUserInterface();
 	~LibraryUserInterface();
 	void printMSG(std::string fileDir);
+	int getInput();
 	void login();
 	void run();
-	int getInput();
 };
 }
 

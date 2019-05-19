@@ -17,7 +17,6 @@ MyLibrary::LibraryUserInterface::~LibraryUserInterface()
 
 void MyLibrary::LibraryUserInterface::printMSG(string fileDir)
 {
-	lib.readData();
 	ifstream ifile(fileDir);
 	if (!ifile.is_open()) {
 		cout << "Message file not found!" << endl;
@@ -29,9 +28,25 @@ void MyLibrary::LibraryUserInterface::printMSG(string fileDir)
 		cout << line << endl;
 }
 
+int MyLibrary::LibraryUserInterface::getInput()
+{
+	string input;
+wrong:
+	cin >> input;
+	for (unsigned int i = 0; i < input.length(); i++)
+	{
+		if (!isdigit(input[i]))
+		{
+			cout << "Invalid input! Please input an integer: ";
+			goto wrong;
+		}
+	}
+	return stoi(input);
+}
+
 void MyLibrary::LibraryUserInterface::login()
 {
-	
+	lib.readData();
 	shared_ptr<Manager>tempman;
 	string in_username, in_password;
 	int ch;
@@ -47,6 +62,7 @@ void MyLibrary::LibraryUserInterface::login()
 		cout << endl;
 	}
 	tempman = lib.getManager(in_username);
+	
 wrong:
 	cout << "Password: ";
 	while (ch = getch()) {
@@ -79,7 +95,7 @@ void MyLibrary::LibraryUserInterface::run()
 {
 	
 loop:
-	printMSG("Resources/Options.txt");
+	printMSG("Resource_gen/Options.txt");
 	cout << "Please enter the option ID: ";
 	int options = getInput();
 	cout << endl;
@@ -106,18 +122,20 @@ loop:
 			// nếu true, in ra các titles còn lại.
 			break;
 		}
+		
 		case 2: {
 			system("CLS");
 			cout << "Please enter student ID: ";
 			ID = getInput();
 			students = lib.getStudent(ID);
 			if (students == nullptr) cout << "Student ID not found.\n";
-			//trả về shared_ptr, nếu == null in ra kh được, nếu có thì in ra Username và Fullname.
+			
 			else cout << "Username: " << students -> Username << "\nFullname: " << students -> Fullname << "\n";
 			system("PAUSE");
 			goto loop;
 			break;
 		}
+		
 		case 3: {
 			system("CLS");
 			auto book_titles = lib.getTitles();
@@ -127,31 +145,34 @@ loop:
 			goto loop;
 			break;
 		}
+		
 		case 4: {
 			system("CLS");
 			cout << "Please enter book ID: ";
 			ID = getInput();
 			books = lib.getTitle(ID);
 			if (books == nullptr) cout << "Book ID is not found.\n";
-			//trả về shared_ptr, nếu == null in ra kh được, nếu có thì in ra Username và Fullname.
+			
 			else cout << "Name: " << books -> Name << "\nAuthor: " << books -> Author << "\n";
 			system("PAUSE");
 			goto loop;
 			break;
 		}
+		
 		case 5: {
 			system("CLS");
 			cout << "Please enter book name: ";
 			cin >> patterns;
 			auto title_list = lib.getTitles(patterns);
 			if (!title_list->size()) cout << "Book " << patterns << " is not found.\n";
-			//trả về shared_ptr, nếu == null in ra kh được, nếu có thì in ra Username và Fullname.
+			
 			for (auto &book: *title_list)
 				cout <<book.Name << " - " << book.Author << "\n";
 			system("PAUSE");
 			goto loop;
 			break;
 		}
+		
 		case 6: {
 			system("CLS");
 			cout << "Please enter book ID: ";
@@ -160,33 +181,35 @@ loop:
 			if (!book_copy->size()) {
 				cout << "This title does not have any copies.\n";
 			}
-			//trả về shared_ptr, nếu == null in ra kh được, nếu có thì in ra Username và Fullname.
+			
 			for (auto &copyId: *book_copy)
 				cout<<"Id: "<<copyId<<"\n";
 			system("PAUSE");
 			goto loop;
 			break;
 		}
+		
 		case 7: {
 			system("CLS");
 			cout << "Please enter book ID: ";
 			ID = getInput();
 			auto book_free = lib.getFreeCopiesByTitleId(ID);
 			if (!book_free->size()) cout << "There are no available books with this ID.\n";
-			//trả về shared_ptr, nếu == null in ra kh được, nếu có thì in ra Username và Fullname.
+			
 			for (auto &free: *book_free)
 				cout <<"ID: "<<free.Id<<" Shelf: "<<free.Shelf<< "\n";
 			system("PAUSE");
 			goto loop;
 			break;
 		}
+		
 		case 8: {
 			system("CLS");
 			cout << "Please enter borrower ID: ";
 			ID = getInput();
 			auto book_borrow = lib.getCopiesByBorrowerId(ID);
 			if (!book_borrow->size()) cout << "This ID is not borrowing any books.\n";
-			//trả về shared_ptr, nếu == null in ra kh được, nếu có thì in ra Username và Fullname.
+			
 			cout << "This person is currently borrowing: \n";
 			for (auto &borrow : *book_borrow)
 				cout<<borrow.Id <<" - "<<lib.getTitle(borrow.TitleId) -> Name<< "\n";
@@ -194,6 +217,7 @@ loop:
 			goto loop;
 			break;
 		}
+		
 		case 9: {
 			system("CLS");
 			int cid, sid;
@@ -223,6 +247,7 @@ loop:
 			}
 			break;
 		}
+		
 		case 10: {
 			system("CLS");
 			int sid, cid;
@@ -250,6 +275,7 @@ loop:
 			}
 			break;
 		}
+		
 		case 11: {
 			system("CLS");
 			lib.writeData();
@@ -265,20 +291,4 @@ loop:
 	}
 	lib.writeData();
 	return;
-}
- 
-int MyLibrary::LibraryUserInterface::getInput()
-{
-	string input;
-wrong:
-	cin >> input;
-	for (int i = 0; i < input.length(); i++)
-	{
-		if (!isdigit(input[i]))
-		{
-			cout << "Invalid input! Please input an integer: ";
-			goto wrong;
-		}
-	}
-	return stoi(input);
 }

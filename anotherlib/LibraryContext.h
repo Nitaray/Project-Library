@@ -30,9 +30,6 @@ private:
 	std::set<std::tuple<int, int>> _CopyTitleIdIndex;
 	std::set<std::tuple<int, int>> _CopyBorrowerIdIndex;
 
-
-	
-	
 public:
     LibraryContext();
     ~LibraryContext();
